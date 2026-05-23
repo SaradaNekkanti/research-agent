@@ -8,14 +8,14 @@
 #   4. Returns the AI-generated brief to the browser
 #   5. Saves the brief as a Markdown file in /reports
 # ============================================================
-
 import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, Request, Header
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -119,7 +119,10 @@ async def list_reports():
 
 # ── POST /generate ─── Generate a research brief ─────────────────────────
 @app.post("/generate")
-async def generate_brief(topic: str = Form(...)):
+async def generate_brief(
+    topic: str = Form(...),
+    x_openai_key: Optional[str] = Header(None)
+):
     """
     Receives the topic from the HTML form, calls OpenAI, saves the
     report, and returns the brief content as JSON.
@@ -134,13 +137,30 @@ async def generate_brief(topic: str = Form(...)):
             status_code=400,
         )
 
+    # Determine which API key to use (header key overrides environment key)
+    api_key_to_use = x_openai_key.strip() if (x_openai_key and x_openai_key.strip()) else os.getenv("OPENAI_API_KEY")
+
+    if not api_key_to_use:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "error": (
+                    "OpenAI API Key is missing. "
+                    "Please enter your OpenAI API key in the settings below to run a live brief generation."
+                )
+            },
+        )
+
+    # Initialize a request-specific client to be thread-safe
+    local_client = OpenAI(api_key=api_key_to_use)
+
     # Build the prompt
     prompt = build_prompt(topic.strip())
 
     # Call the OpenAI Chat Completions API
     # "gpt-4o-mini" is cost-effective and great for structured text tasks
     try:
-        response = client.chat.completions.create(
+        response = local_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {
@@ -170,14 +190,14 @@ async def generate_brief(topic: str = Form(...)):
 
     except AuthenticationError:
         # 401: API key is wrong or missing
+        error_msg = (
+            "Invalid OpenAI API key (401). Please double-check the API key you entered in the settings."
+            if (x_openai_key and x_openai_key.strip()) else
+            "Invalid OpenAI API key (401). Check the OPENAI_API_KEY value in your .env file."
+        )
         return JSONResponse(
             status_code=401,
-            content={
-                "error": (
-                    "Invalid OpenAI API key (401). "
-                    "Check the OPENAI_API_KEY value in your .env file."
-                )
-            },
+            content={"error": error_msg},
         )
 
     except APIError as exc:

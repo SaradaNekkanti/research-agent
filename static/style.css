@@ -273,6 +273,85 @@ body {
   transform: translateY(-1px);
 }
 
+/* ── API Key Settings ────────────────────────────────────── */
+.api-key-container {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.25rem;
+}
+
+.api-key-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.api-key-header:hover {
+  color: var(--text-primary);
+}
+
+.api-key-toggle-arrow {
+  margin-left: auto;
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+  color: var(--text-muted);
+}
+
+.api-key-toggle-arrow.rotated {
+  transform: rotate(180deg);
+  color: var(--text-primary);
+}
+
+.api-key-input-wrapper {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: max-height 0.3s ease-in-out, opacity 0.25s ease-in-out, margin-top 0.3s ease-in-out;
+  max-height: 250px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+.api-key-input-wrapper.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
+
+.api-key-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.1rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.api-key-input::placeholder {
+  color: var(--text-muted);
+}
+
+.api-key-input:focus {
+  border-color: var(--grad-mid);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+}
+
+.api-key-help {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
 /* ══════════════════════════════════════════════════════════ */
 /* LOADING                                                    */
 /* ══════════════════════════════════════════════════════════ */

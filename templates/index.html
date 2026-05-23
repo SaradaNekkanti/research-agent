@@ -59,6 +59,27 @@
               <span class="btn-icon">→</span>
             </button>
           </div>
+
+          <!-- API Key Settings Section (Collapsible) -->
+          <div class="api-key-container">
+            <div class="api-key-header" onclick="toggleApiKeyInput()">
+              <span class="api-key-toggle-icon">🔑</span>
+              <span class="api-key-toggle-label">Use your own OpenAI API Key (Required for live deployment)</span>
+              <span id="apiKeyToggleArrow" class="api-key-toggle-arrow">▼</span>
+            </div>
+            <div id="apiKeyInputWrapper" class="api-key-input-wrapper collapsed">
+              <input
+                id="apiKeyInput"
+                type="password"
+                class="api-key-input"
+                placeholder="sk-proj-..."
+                autocomplete="off"
+              />
+              <p class="api-key-help">
+                Your key is stored locally in your browser and sent over HTTPS. It is never saved or logged by the server.
+              </p>
+            </div>
+          </div>
         </form>
 
         <!-- Quick-pick chips for inspiration -->
@@ -142,6 +163,34 @@
   <script>
     // ── Globals ──────────────────────────────────────────────────────────
     let currentBriefText = "";   // stores the raw brief for copy/download
+
+    // ── Local Storage & Toggle for API Key ──────────────────────────────
+    function toggleApiKeyInput() {
+      const wrapper = document.getElementById("apiKeyInputWrapper");
+      const arrow = document.getElementById("apiKeyToggleArrow");
+      const isCollapsed = wrapper.classList.toggle("collapsed");
+      arrow.classList.toggle("rotated", !isCollapsed);
+    }
+
+    function initApiKey() {
+      const apiKeyInput = document.getElementById("apiKeyInput");
+      const savedKey = localStorage.getItem("openai_api_key");
+      if (savedKey) {
+        apiKeyInput.value = savedKey;
+        document.querySelector(".api-key-toggle-label").textContent = "Use your own OpenAI API Key (Loaded from browser storage)";
+      }
+
+      apiKeyInput.addEventListener("input", () => {
+        const key = apiKeyInput.value.trim();
+        if (key) {
+          localStorage.setItem("openai_api_key", key);
+          document.querySelector(".api-key-toggle-label").textContent = "Use your own OpenAI API Key (Loaded from browser storage)";
+        } else {
+          localStorage.removeItem("openai_api_key");
+          document.querySelector(".api-key-toggle-label").textContent = "Use your own OpenAI API Key (Required for live deployment)";
+        }
+      });
+    }
 
     // ── Fill the input with a quick-pick chip value ───────────────────────
     function fillTopic(value) {
@@ -256,8 +305,16 @@
         const formData = new FormData();
         formData.append("topic", topic);
 
+        // Fetch optional API key from UI
+        const apiKey = document.getElementById("apiKeyInput").value.trim();
+        const headers = {};
+        if (apiKey) {
+          headers["X-OpenAI-Key"] = apiKey;
+        }
+
         const res = await fetch("/generate", {
           method: "POST",
+          headers: headers,
           body: formData,
         });
 
@@ -434,6 +491,7 @@
     }
 
     // ── Init ──────────────────────────────────────────────────────────
+    initApiKey();
     loadReports();
   </script>
 </body>
