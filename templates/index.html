@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI Research Brief Agent — generate structured research summaries powered by OpenAI." />
+  <title>AI Research Brief Agent</title>
+
+  <!-- Google Font: Inter for a modern, clean look -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════ HEADER ═══════════════════════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🔬</span>
+        <span class="logo-text">ResearchBrief <span class="logo-tag">AI</span></span>
+      </div>
+      <p class="header-tagline">Instant AI-powered research briefs in seconds</p>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════ HERO ═════════════════════════════════ -->
+  <main>
+    <section class="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          Research any <span class="gradient-text">topic or company</span><br/>with one click
+        </h1>
+        <p class="hero-subtitle">
+          Enter a topic or company name and our AI will generate a structured brief —
+          Summary, Key Insights, Risks &amp; Action Items — saved automatically to your reports folder.
+        </p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ INPUT CARD ════════════════════════════ -->
+    <section class="card-section">
+      <div class="input-card">
+        <form id="researchForm">
+          <label for="topicInput" class="input-label">Topic or Company Name</label>
+          <div class="input-row">
+            <input
+              id="topicInput"
+              name="topic"
+              type="text"
+              class="topic-input"
+              placeholder="e.g. OpenAI, Climate Change, Tesla, Quantum Computing…"
+              autocomplete="off"
+              required
+            />
+            <button id="generateBtn" type="submit" class="generate-btn">
+              <span class="btn-text">Generate Brief</span>
+              <span class="btn-icon">→</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Quick-pick chips for inspiration -->
+        <div class="chips">
+          <span class="chip-label">Try:</span>
+          <button class="chip" onclick="fillTopic('OpenAI')">OpenAI</button>
+          <button class="chip" onclick="fillTopic('Climate Change')">Climate Change</button>
+          <button class="chip" onclick="fillTopic('Apple Inc')">Apple Inc</button>
+          <button class="chip" onclick="fillTopic('Quantum Computing')">Quantum Computing</button>
+          <button class="chip" onclick="fillTopic('Renewable Energy')">Renewable Energy</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ LOADING STATE ═════════════════════════ -->
+    <section id="loadingSection" class="loading-section hidden">
+      <div class="spinner-wrapper">
+        <div class="spinner"></div>
+        <p class="loading-text">Generating your research brief…</p>
+        <p class="loading-sub">This usually takes 5–15 seconds</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════ ERROR CARD ════════════════════════════ -->
+    <div id="errorBanner" class="error-card hidden">
+      <div class="error-icon-wrap">
+        <span id="errorIcon" class="error-icon">⚠️</span>
+      </div>
+      <div class="error-body">
+        <h3 id="errorTitle" class="error-title">Something went wrong</h3>
+        <p id="errorMessage" class="error-message">An unexpected error occurred. Please try again.</p>
+        <div id="errorActions" class="error-actions"></div>
+      </div>
+      <button class="error-close" onclick="hideError()" aria-label="Dismiss">✕</button>
+    </div>
+
+    <!-- ═══════════════════════ RESULT AREA ══════════════════════════ -->
+    <section id="resultSection" class="result-section hidden">
+
+      <!-- Report header bar -->
+      <div class="result-header">
+        <div>
+          <h2 class="result-title">Research Brief: <span id="resultTopic"></span></h2>
+          <p class="result-meta">
+            Generated just now &nbsp;•&nbsp;
+            Saved to <code id="resultPath"></code>
+          </p>
+        </div>
+        <div class="result-actions">
+          <button id="copyBtn" class="action-btn" onclick="copyBrief()">📋 Copy</button>
+          <button id="downloadBtn" class="action-btn" onclick="downloadBrief()">⬇ Download</button>
+          <button id="newBtn" class="action-btn primary-action" onclick="resetForm()">＋ New Brief</button>
+        </div>
+      </div>
+
+      <!-- Four section cards rendered by JS -->
+      <div id="briefCards" class="brief-cards"></div>
+
+    </section>
+
+    <!-- ═══════════════════════ SAVED REPORTS ═════════════════════════ -->
+    <section class="reports-section">
+      <div class="reports-header">
+        <h2 class="reports-title">📁 Saved Reports</h2>
+        <button class="refresh-btn" onclick="loadReports()">Refresh</button>
+      </div>
+      <ul id="reportsList" class="reports-list">
+        <li class="reports-empty">No reports yet — generate one above!</li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════ FOOTER ═══════════════════════════════ -->
+  <footer class="site-footer">
+    <p>Built with ❤️ using <strong>FastAPI</strong> &amp; <strong>OpenAI</strong> · Reports saved locally as Markdown</p>
+  </footer>
+
+
+  <!-- ═══════════════════════════ JAVASCRIPT ════════════════════════════ -->
+  <script>
+    // ── Globals ──────────────────────────────────────────────────────────
+    let currentBriefText = "";   // stores the raw brief for copy/download
+
+    // ── Fill the input with a quick-pick chip value ───────────────────────
+    function fillTopic(value) {
+      document.getElementById("topicInput").value = value;
+      document.getElementById("topicInput").focus();
+    }
+
+    // ── Parse sections out of the AI Markdown response ───────────────────
+    // The AI returns sections like "## Summary\n...\n## Key Insights\n..."
+    // We split on "## " headings to get individual section objects.
+    function parseSections(markdown) {
+      const sections = [];
+      // Match each ## heading and its content
+      const regex = /##\s+(.+?)\n([\s\S]*?)(?=##\s+|\s*$)/g;
+      let match;
+      while ((match = regex.exec(markdown)) !== null) {
+        sections.push({
+          title: match[1].trim(),
+          content: match[2].trim(),
+        });
+      }
+      return sections;
+    }
+
+    // ── Icon map for known sections ────────────────────────────────────
+    const SECTION_ICONS = {
+      "Summary": "📋",
+      "Key Insights": "💡",
+      "Risks": "⚠️",
+      "Action Items": "✅",
+    };
+
+    const SECTION_COLORS = {
+      "Summary": "blue",
+      "Key Insights": "purple",
+      "Risks": "red",
+      "Action Items": "green",
+    };
+
+    // ── Convert markdown bullets to HTML <li> items ───────────────────
+    function renderContent(text) {
+      // Convert "- item" and "* item" bullet lines to <li>
+      const lines = text.split("\n");
+      let html = "";
+      let inList = false;
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          if (!inList) { html += "<ul>"; inList = true; }
+          html += `<li>${trimmed.slice(2)}</li>`;
+        } else {
+          if (inList) { html += "</ul>"; inList = false; }
+          if (trimmed) html += `<p>${trimmed}</p>`;
+        }
+      }
+      if (inList) html += "</ul>";
+      return html;
+    }
+
+    // ── Render the brief cards into #briefCards ────────────────────────
+    function renderBrief(topic, brief, savedPath) {
+      // Store for copy / download
+      currentBriefText = brief;
+
+      // Fill header info
+      document.getElementById("resultTopic").textContent = topic;
+      document.getElementById("resultPath").textContent = savedPath;
+
+      // Parse and render section cards
+      const sections = parseSections(brief);
+      const container = document.getElementById("briefCards");
+      container.innerHTML = "";
+
+      if (sections.length === 0) {
+        // Fallback: render the whole brief as plain text
+        container.innerHTML = `<div class="brief-card"><p>${brief}</p></div>`;
+        return;
+      }
+
+      sections.forEach((sec, idx) => {
+        const icon = SECTION_ICONS[sec.title] || "📌";
+        const color = SECTION_COLORS[sec.title] || "blue";
+        const card = document.createElement("div");
+        card.className = `brief-card brief-card--${color}`;
+        card.style.animationDelay = `${idx * 0.1}s`;
+        card.innerHTML = `
+          <div class="card-heading">
+            <span class="card-icon">${icon}</span>
+            <h3 class="card-title">${sec.title}</h3>
+          </div>
+          <div class="card-body">${renderContent(sec.content)}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // ── Form submit handler ────────────────────────────────────────────
+    document.getElementById("researchForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const topic = document.getElementById("topicInput").value.trim();
+      if (!topic) return;
+
+      // Show loading, hide previous results & errors
+      showLoading(true);
+      hideError();
+      showResult(false);
+
+      try {
+        // Build form data (FastAPI Form(...) expects multipart/form-data)
+        const formData = new FormData();
+        formData.append("topic", topic);
+
+        const res = await fetch("/generate", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || "Failed to generate brief.");
+        }
+
+        // Render the result
+        renderBrief(data.topic, data.brief, data.saved_to);
+        showResult(true);
+        loadReports();     // refresh the saved reports list
+
+      } catch (err) {
+        showError(err.message || "An unexpected error occurred.");
+      } finally {
+        showLoading(false);
+      }
+    });
+
+    // ── UI helper functions ────────────────────────────────────────────
+    function showLoading(visible) {
+      document.getElementById("loadingSection").classList.toggle("hidden", !visible);
+      const btn = document.getElementById("generateBtn");
+      btn.disabled = visible;
+      btn.querySelector(".btn-text").textContent = visible ? "Generating…" : "Generate Brief";
+    }
+
+    function showResult(visible) {
+      document.getElementById("resultSection").classList.toggle("hidden", !visible);
+      if (visible) {
+        document.getElementById("resultSection").scrollIntoView({ behavior: "smooth" });
+      }
+    }
+
+    // ── Error type classifier ──────────────────────────────────────────
+    // Reads the raw error message and returns a structured object with
+    // a friendly icon, title, human-readable description, and optional
+    // call-to-action button so the user knows exactly what to do next.
+    function classifyError(rawMessage) {
+      const msg = (rawMessage || "").toLowerCase();
+
+      if (msg.includes("quota") || msg.includes("billing") || msg.includes("429") || msg.includes("insufficient")) {
+        return {
+          icon: "💳",
+          title: "OpenAI Credits Exhausted",
+          message: "Your OpenAI API key has no remaining credits. This is a billing issue — your code is working perfectly!",
+          actions: [
+            { label: "Add Credits on OpenAI →", url: "https://platform.openai.com/account/billing", primary: true },
+            { label: "View Pricing", url: "https://openai.com/pricing", primary: false },
+          ],
+        };
+      }
+
+      if (msg.includes("invalid") && msg.includes("key") || msg.includes("401") || msg.includes("authentication")) {
+        return {
+          icon: "🔑",
+          title: "Invalid API Key",
+          message: "The OpenAI API key in your .env file is incorrect or has been revoked. Double-check it and restart the server.",
+          actions: [
+            { label: "Get a New API Key →", url: "https://platform.openai.com/api-keys", primary: true },
+          ],
+        };
+      }
+
+      if (msg.includes("network") || msg.includes("failed to fetch") || msg.includes("502")) {
+        return {
+          icon: "📡",
+          title: "Network Error",
+          message: "Could not reach the server. Make sure uvicorn is running and try again.",
+          actions: [],
+        };
+      }
+
+      if (msg.includes("empty") || msg.includes("enter a topic")) {
+        return {
+          icon: "✏️",
+          title: "No Topic Entered",
+          message: "Please type a topic or company name before generating a brief.",
+          actions: [],
+        };
+      }
+
+      // Generic fallback
+      return {
+        icon: "⚠️",
+        title: "Something Went Wrong",
+        message: rawMessage || "An unexpected error occurred. Please try again in a moment.",
+        actions: [],
+      };
+    }
+
+    function showError(rawMessage) {
+      const { icon, title, message, actions } = classifyError(rawMessage);
+
+      document.getElementById("errorIcon").textContent    = icon;
+      document.getElementById("errorTitle").textContent   = title;
+      document.getElementById("errorMessage").textContent = message;
+
+      // Build action buttons
+      const actionsEl = document.getElementById("errorActions");
+      actionsEl.innerHTML = actions.map(a =>
+        `<a href="${a.url}" target="_blank" rel="noopener"
+            class="err-btn ${a.primary ? 'err-btn--primary' : 'err-btn--secondary'}">
+           ${a.label}
+         </a>`
+      ).join("");
+
+      const banner = document.getElementById("errorBanner");
+      banner.classList.remove("hidden");
+      banner.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    function hideError() {
+      document.getElementById("errorBanner").classList.add("hidden");
+    }
+
+    function resetForm() {
+      document.getElementById("topicInput").value = "";
+      showResult(false);
+      hideError();
+      document.getElementById("topicInput").focus();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    // ── Copy brief to clipboard ────────────────────────────────────────
+    function copyBrief() {
+      if (!currentBriefText) return;
+      navigator.clipboard.writeText(currentBriefText).then(() => {
+        const btn = document.getElementById("copyBtn");
+        btn.textContent = "✅ Copied!";
+        setTimeout(() => { btn.textContent = "📋 Copy"; }, 2000);
+      });
+    }
+
+    // ── Download brief as a .md file ───────────────────────────────────
+    function downloadBrief() {
+      if (!currentBriefText) return;
+      const topic = document.getElementById("resultTopic").textContent;
+      const blob = new Blob([`# Research Brief: ${topic}\n\n${currentBriefText}`], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${topic.replace(/\s+/g, "_").toLowerCase()}_brief.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ── Load list of saved reports from the backend ────────────────────
+    async function loadReports() {
+      try {
+        const res = await fetch("/reports-list");
+        const data = await res.json();
+        const list = document.getElementById("reportsList");
+
+        if (data.reports.length === 0) {
+          list.innerHTML = '<li class="reports-empty">No reports yet — generate one above!</li>';
+          return;
+        }
+
+        list.innerHTML = data.reports.map((name) => {
+          // Make the filename human-readable: "openai_20240522_123456.md"
+          const label = name.replace(/_(\d{8})_(\d{6})\.md$/, " ($1)").replace(/_/g, " ");
+          return `<li class="report-item">
+            <span class="report-icon">📄</span>
+            <span class="report-name">${label}</span>
+            <code class="report-file">${name}</code>
+          </li>`;
+        }).join("");
+      } catch {
+        // silently ignore list load errors
+      }
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────
+    loadReports();
+  </script>
+</body>
+</html>

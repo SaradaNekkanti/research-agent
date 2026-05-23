@@ -1,0 +1,35 @@
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual environment ────────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+
+# ── 🔐 SECRET: NEVER commit this file ─────────────────────────
+.env
+
+# ── Generated reports (optional: remove this line if you WANT
+#    to commit sample reports to show in your portfolio) ────────
+reports/*.md
+
+# ── IDE / OS files ─────────────────────────────────────────────
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────────
+*.log
+uvicorn.log
