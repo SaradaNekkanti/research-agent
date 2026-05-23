@@ -13,6 +13,8 @@
 
 ![ResearchBrief AI Dashboard](static/dashboard-mockup.png)
 
+📄 **[Click here to view a Sample Generated Brief (Google)](samples/google_brief.md)**
+
 ---
 
 ## 💡 What it does (in 5 seconds)
