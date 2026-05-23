@@ -1,213 +1,159 @@
-# 🔬 AI Research Brief Agent
+# 🔬 ResearchBrief AI
 
-> **An AI-powered tool that generates structured research briefs in seconds — built with Python, FastAPI, and OpenAI.**
+### *Instant, Structured AI Research Briefs on Any Company or Topic in Seconds.*
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat&logo=fastapi&logoColor=white)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=flat&logo=openai&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-green?style=flat)
-
----
-
-## 📌 The Problem
-
-Researchers, analysts, and product managers spend **hours** manually compiling briefs on companies, markets, and trends — reading dozens of tabs, summarising findings, and identifying risks before making decisions.
-
-## 💡 The Solution
-
-**AI Research Brief Agent** takes any topic or company name and generates a fully structured research brief in under 15 seconds — automatically saving it as a Markdown file for future reference.
+[![Live Demo](https://img.shields.io/badge/Demo-Live_on_Render-blue?style=for-the-badge&logo=render&logoColor=white)](https://research-agent.onrender.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
 
 ---
 
-## ✨ Features
+## 🖥️ Product Dashboard
+
+![ResearchBrief AI Dashboard](static/dashboard-mockup.png)
+
+---
+
+## 💡 What it does (in 5 seconds)
+**ResearchBrief AI** is a lightweight, high-performance research assistant. Enter any company or topic, and it immediately generates a structured, four-part brief (Summary, Key Insights, Risks, Action Items) powered by GPT-4o-mini. The report is displayed instantly in a sleek glassmorphic UI and saved locally as a Markdown file for future reference.
+
+---
+
+## 📌 Why it matters (The PM Perspective)
+
+### 🔴 The Pain
+Market researchers, product managers, and analysts spend **hours** reading multiple tabs, aggregating data, and copy-pasting findings into structured briefs before meetings or pitches. This manual process delays decision-making and leads to inconsistent formats.
+
+### 🟢 The Cure
+ResearchBrief AI automates the initial research aggregation phase. By reducing research prep time from **2 hours to <15 seconds**, teams can align faster, maintain standardized brief templates, and focus on strategic analysis rather than data scraping.
+
+### 🔒 Enterprise-Ready Security
+Deploying public demos often risks API key theft and high cloud bills. ResearchBrief AI features a **"Bring Your Own Key" (BYOK)** model. The app can be hosted publicly for free, and users can safely enter their own OpenAI API keys, which are stored locally in the browser and never logged.
+
+---
+
+## ✨ Core Features
 
 | Feature | Description |
-|---|---|
-| 🔍 **Instant AI Briefs** | Enter any topic or company → get a structured 4-section brief |
-| 📋 **Summary** | Concise 3–5 sentence overview |
-| 💡 **Key Insights** | 5 most important facts, trends, or findings |
-| ⚠️ **Risks** | Key challenges and concerns to be aware of |
-| ✅ **Action Items** | Concrete next steps for decision-making |
-| 💾 **Auto-Save Reports** | Every brief saved as a `.md` file in `/reports` |
-| 📋 **Copy & Download** | One-click copy to clipboard or download as Markdown |
-| 📁 **Reports History** | Browse all previously generated briefs |
-| 🎨 **Premium UI** | Dark mode glassmorphism design with smooth animations |
+| :--- | :--- |
+| ⚡ **Instant Summaries** | Type a company/topic → get structured research in <15 seconds. |
+| 🔑 **Safe Portability (BYOK)** | Input your own API key in the settings panel—stored securely in local storage. |
+| 💾 **Automated File Saving** | Automatically writes briefs as clean Markdown (`.md`) files in `reports/`. |
+| 📋 **One-Click Actions** | Copy the brief text to your clipboard or download it instantly. |
+| 📁 **Reports History** | View and browse previously generated briefs directly from the sidebar. |
+| 🎨 **Premium UX** | Dark-mode glassmorphic interface with micro-interactions and smooth animations. |
 
 ---
 
-## 🖥️ Demo
-
-> *Enter a topic like "Tesla", "Climate Change", or "Quantum Computing" — the AI generates a full brief in ~10 seconds.*
-
-```
-Topic: OpenAI
-
-📋 Summary
-OpenAI is an AI research company founded in 2015...
-
-💡 Key Insights
-- GPT-4 powers over 100 enterprise applications
-- Revenue exceeded $1.6B in 2023...
-
-⚠️ Risks
-- Regulatory scrutiny increasing globally
-- High compute costs limit profitability...
-
-✅ Action Items
-- Monitor OpenAI's enterprise pricing changes
-- Evaluate API rate limits for production use...
-```
-
----
-
-## 🏗️ Architecture
+## 🏗️ How It Works (Architecture)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     Browser (User)                       │
-│          HTML + Vanilla CSS + Vanilla JS                 │
+│     • HTML5 + CSS3 (Glassmorphism & animations)         │
+│     • Vanilla JS (Local storage key + request headers)   │
 └──────────────────────┬──────────────────────────────────┘
-                       │ POST /generate (FormData)
+                       │ POST /generate (Header: X-OpenAI-Key)
                        ▼
 ┌─────────────────────────────────────────────────────────┐
-│              FastAPI Backend (app.py)                     │
-│   • Validates input                                      │
-│   • Builds structured prompt                             │
-│   • Calls OpenAI Chat Completions API                    │
-│   • Saves report as .md to /reports                      │
-│   • Returns JSON to frontend                             │
+│              FastAPI Backend (app.py)                   │
+│   • Validates topic inputs                              │
+│   • Selects API Key (Header Key overrides .env Key)     │
+│   • Calls OpenAI Chat Completions API                   │
+│   • Saves report locally to /reports                    │
+│   • Sends formatted JSON response back                  │
 └──────────────────────┬──────────────────────────────────┘
                        │
           ┌────────────┴────────────┐
           ▼                         ▼
-   OpenAI API                  /reports/
- (gpt-4o-mini)            (Markdown files)
+     OpenAI API                  /reports/
+   (gpt-4o-mini)            (Markdown files)
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started (No Confusion)
 
-### Prerequisites
-- Python 3.10+
-- An [OpenAI API key](https://platform.openai.com/api-keys) (requires billing — ~$0.0001 per brief)
+### 📋 Prerequisites
+*   **Python 3.10+** installed on your machine.
+*   An **OpenAI API Key** (You can use your own key in the UI, or set it up in the backend).
 
-### Installation
+### 🛠️ Step-by-Step Installation
 
-```bash
-# 1. Clone the repo
-git clone https://github.com/YOUR_USERNAME/research-agent.git
-cd research-agent
+1.  **Clone the Repository:**
+    ```bash
+    git clone https://github.com/SaradaNekkanti/research-agent.git
+    cd research-agent
+    ```
 
-# 2. Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate        # Mac/Linux
-# venv\Scripts\activate         # Windows
+2.  **Create & Activate Virtual Environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
 
-# 3. Install dependencies
-pip install -r requirements.txt
+3.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-# 4. Set up your API key
-cp .env.example .env
-# Open .env and replace the placeholder with your real key:
-# OPENAI_API_KEY=sk-your-key-here
+4.  **Set Up Local API Key (Optional):**
+    *   If you want to run the app locally without typing your key in the web interface every time, copy the template and insert your key:
+    ```bash
+    cp .env.example .env
+    # Open the .env file and add your key:
+    # OPENAI_API_KEY=sk-your-actual-key-here
+    ```
 
-# 5. Run the server
-uvicorn app:app --reload
-```
+5.  **Run the Server:**
+    ```bash
+    uvicorn app:app --reload --port 8001
+    ```
 
-### Open in browser
-```
-http://localhost:8000
-```
+6.  **Open in your Browser:**
+    Open [http://localhost:8001](http://localhost:8001) in your browser.
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 research-agent/
-├── app.py                  # FastAPI backend — routes, OpenAI calls, report saving
-├── requirements.txt        # Python dependencies
-├── .env.example            # Template for environment variables (safe to commit)
-├── .gitignore              # Excludes .env, venv, __pycache__, etc.
-├── templates/
-│   └── index.html          # Frontend — form, result cards, reports list
+├── app.py                  # FastAPI backend containing API key verification & endpoints
+├── requirements.txt        # Third-party Python dependencies
+├── .env.example            # Environment variables template
+├── .gitignore              # Ignores local environment files (.env, venv/, reports/*.md)
 ├── static/
-│   └── style.css           # Dark glassmorphism design system
-└── reports/                # Auto-generated .md research briefs saved here
+│   ├── style.css           # Premium dark-mode styling variables & layouts
+│   └── dashboard-mockup.png # UI dashboard screenshot
+├── templates/
+│   └── index.html          # Frontend page structure & dynamic JS scripts
+└── reports/                # Folder where reports are saved automatically
 ```
 
 ---
 
-## 🔐 Security
+## 🛠️ Product Decisions & Metrics
 
-- **API keys are never committed to Git** — stored only in `.env` (excluded by `.gitignore`)
-- The `.env.example` file shows the required variable names with a placeholder value
-- Reports are stored locally and never sent to any third party beyond OpenAI
+*   **Model Selection (`gpt-4o-mini`)**: Chosen for its fast response latency (<10s) and 95% comparable quality to GPT-4 at a 10x cheaper price point.
+*   **Markdown Format**: Briefs are written to `.md` files so users can easily drop them into Notion, GitHub wikis, Obsidian, or Slack.
+*   **No DB Overhead**: Storing files locally on disk keeps deployment costs at $0, simplifies backups, and makes the project entirely portable.
 
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Backend** | Python · FastAPI · Uvicorn |
-| **AI** | OpenAI `gpt-4o-mini` via Chat Completions API |
-| **Frontend** | HTML5 · Vanilla CSS · Vanilla JavaScript |
-| **Templating** | Jinja2 |
-| **Config** | python-dotenv |
-| **Reports** | Markdown (`.md`) files |
-
----
-
-## 📈 PM Case Study
-
-### Problem
-Knowledge workers waste significant time on manual research aggregation before meetings, pitches, and product decisions.
-
-### Hypothesis
-If I can reduce research brief creation from ~2 hours to <15 seconds, teams can move faster and make better-informed decisions.
-
-### Solution Built
-A beginner-friendly AI agent with a clean web UI that accepts a topic, sends a structured prompt to GPT-4o-mini, and returns a 4-section structured brief — automatically saved locally.
-
-### Key Decisions
-- **`gpt-4o-mini` over GPT-4**: 95% quality at 10x lower cost for structured text output
-- **Markdown output**: Universal format — readable in Notion, GitHub, Obsidian, VS Code
-- **No database**: Local file storage keeps the tool simple and portable for solo users
-- **Structured prompt with exact headings**: Forces consistent output that the frontend can parse reliably
-
-### Metrics (Hypothetical KPIs)
-| Metric | Target |
-|---|---|
-| Time to generate brief | < 15 seconds |
-| Cost per brief | < $0.001 |
-| User actions to get result | 1 (type + click) |
-| Sections per brief | 4 (consistent) |
+### Target Performance Metrics (KPIs)
+*   **Brief Generation Time**: < 15 seconds.
+*   **Cost per Brief**: ~ $0.0005.
+*   **User Clicks to Value**: 1 click.
 
 ---
 
 ## 🗺️ Roadmap
-
-- [ ] Add Google Gemini / Groq support (free tier alternatives)
-- [ ] Export briefs as PDF
-- [ ] Compare two companies side-by-side
-- [ ] Add source citations via web search integration
-- [ ] Multi-user support with login
-
----
-
-## 🤝 Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you'd like to change.
+- [ ] Add Gemini Pro & Claude 3.5 Sonnet integrations.
+- [ ] Support exporting briefs to PDF and HTML email format.
+- [ ] Side-by-side competitor comparison view.
+- [ ] Add real-time Google search citations to reference current events.
 
 ---
 
 ## 📄 License
-
-MIT License — feel free to use this in your own projects.
-
----
-
-*Built with ❤️ using FastAPI and OpenAI · Designed for researchers, analysts, and PMs*
+This project is licensed under the MIT License - feel free to adapt it for your own portfolio.
